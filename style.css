@@ -16,7 +16,8 @@ body{
     width: 100vw;
     height: 100vh;
     padding: 10vh 7vw;
-    background-image: url("img/fond.jpg");
+    background-color: #eee;
+    background-image: url("img/fond.webp");
     background-size: cover;
     background-position-x: right;
     background-position-y: center;
@@ -95,7 +96,7 @@ h2{
     font-family: 'Nunito';
     font-weight: 700;
     font-size: 2rem;
-    color: #eff;
+    color: #eee;
     background: #222;
     border: #222 3px solid;
     border-radius: 3px;   
