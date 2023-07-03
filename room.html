@@ -1,8 +1,12 @@
 <!DOCTYPE HTML>
 <html lang="fr">
   <head>
-	<title>DUT MMI - SAE Programmer la 3D pour le web</title>
+	<title>Room's Painter : Escape Game</title>
   <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+
   <style>
     body {
       margin: 0px;
@@ -27,14 +31,12 @@
       top: 10px;
       right: 10px;
       bottom: 10px;
-      background-color: #EEEEEE;
+      background-color: #eee;
       border: 2px solid white;
       padding: 5px;
-      font-size: 14pt;
-      font-family: times new roman;
-      font-weight: bold;
-      font-style: italic;
-      color: black;
+      font-size: 1rem;
+      font-family: "Nunito";
+      color: #222;
     }
 
     input {
@@ -42,9 +44,14 @@
       border: none;
       width: 260px;
       color: black;
-      font-size: 14pt;
-      font-family: times new roman;
+      font-size: 1rem;
+      font-family: "Nunito";
       font-weight: bold;
+    }
+
+    .aide{
+      font-size: 1rem;
+      font-family: "Nunito";
     }
 
     #divTexture {
@@ -73,18 +80,13 @@
     <div id="info">
       <table>
         <tr>
-          <td>Click position : </td>
-          <td><input type="text" id="positions" value="(0;0)" class="info" /></td>
-        </tr>
-        <tr>
-          <td>Clicked object : </td>
-          <td><input type="text" id="obj_name" value="vide" class="info" /></td>
-        </tr>
-        <tr>
           <td>Action : </td>
           <td><input type="text" id="action" value="0" class="info" /></td>
         </tr>
       </table>
+      <p class="aide">Appuyez sur "échap" pour débloquer/bloquer la caméra.</p>
+      <p class="aide">Utilisez les flèches directionnelles pour vous déplacer.</p>
+      <p class="aide">Déplacez la souris pour tourner la caméra.</p>
       <div id="divTexture">
         <canvas id="canvasTexture" width="256" height="256" />
       </div>
