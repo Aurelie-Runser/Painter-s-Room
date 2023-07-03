@@ -7,7 +7,7 @@
     <title>Room's Painter : Bravo !</title>
 
     <link href="/style.css" rel="stylesheet">
-
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
@@ -16,28 +16,28 @@
 <body class="fin">
     <div class="entete fin-entete">
         <h2 class="entete-escapegame fin-escapegame">Escape Game</h2>
-        <h1 class="entete-titre fin-titre">Room's Painter</h1>
+        <h1 id="titre" class="entete-titre fin-titre">Room's Painter</h1>
     </div>
 
     <div class="corps fin-corps">
-        <p class="corps-texte fin-texte texte_bravo">Bravo !</p>
+        <p id="titre" class="corps-texte fin-texte texte_bravo">Bravo !</p>
         <p class="corps-texte fin-texte">Vous vous êtes échappé de l'atelier maudit !</p>
         <div class="fin-buttons">
             <a class="button fin-button" href="/room.html">
-                <button class="button-texte">
+                <button class="button-texte button-1">
                     Rejouer        
                 </button>
             </a>
     
             <a id="bouton-copie" class="button fin-button">
-                <button class="button-texte">
+                <button class="button-texte button-2">
                     Partager        
                 </button>
             </a>
         </div>
     </div>
-
-
+    
+    
     <div class="div-auteurs">
         <p class="auteurs ">Modéliseurs 3D : 
             <a class="auteur-lien auteur-fin" target="_blank" href="#">Mélina Bouchelleghem</a>
@@ -49,12 +49,13 @@
             <a class="auteur-lien auteur-fin" target="_blank" href="https://portfolio.aurelierunser.fr/">Aurélie Runser</a>
         </p>
     </div>
-
+    
     <script>
+        // bouton "partage" pour copier le lien du site
         document.getElementById("bouton-copie").addEventListener("click", function() {
-            var lienAccueil = "https://rooms-painter.aurelierunser.fr/"; // Remplacez ceci par le lien de votre page d'accueil
+            var lienAccueil = "https://rooms-painter.aurelierunser.fr/";
             copierDansPressePapier(lienAccueil);
-            alert("Lien de la page d'accueil copié dans le presse-papiers !");
+            alert("Lien du jeu copié dans le presse-papiers. \nMerci de votre partage !");
         });
 
         function copierDansPressePapier(texte) {
@@ -66,6 +67,5 @@
             document.body.removeChild(elementTemporaire);
         }
     </script>
-    
 </body>
 </html>

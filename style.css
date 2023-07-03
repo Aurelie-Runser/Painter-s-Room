@@ -23,12 +23,20 @@ body{
     background-position-y: center;
 }
 
+/* animation de couleur des textes */
+@keyframes coloranim {
+    0%{ color: #e48102}
+    25%{ color: #0151a3}
+    50%{ color: #e4d73d}
+    75%{ color: #006683}
+    100%{ color: #e48102}
+}
+
 
 /* comportement de l'en tete */
 .entete{
     width: fit-content;
     color: #222;
-
 }
 
 /* titre "Room's Painter" */
@@ -36,6 +44,8 @@ h1{
     font-size: 6.5rem;
     font-family: "Playfair Display";
     font-weight: 500;
+    color: #222;
+    animation: coloranim 8s ease infinite;
 }
 
 /* sous-titres */
@@ -65,7 +75,7 @@ h2{
 
 /* liens vers les portfolios au survole */
 .auteur-lien:hover{
-    color: #E48102;
+    color: #e48102;
 }
 
 
@@ -74,13 +84,14 @@ h2{
 .corps{
     margin: 13vh 0;
     width: 45vw;
+    color: #222;
 }
 
 /* texte de la page */
 .corps-texte{
     font-size: 2.5rem;
     font-family: "Playfair Display";
-    font-weight: 500;
+    font-weight: 800;
 }
 
 /* bouton (le lien a) */
@@ -92,6 +103,7 @@ h2{
 
 /* style du bouton */
 .button-texte{
+    cursor: pointer;
     padding: 1.5rem 3rem;
     font-family: 'Nunito';
     font-weight: 700;
@@ -99,13 +111,19 @@ h2{
     color: #eee;
     background: #222;
     border: #222 3px solid;
-    border-radius: 3px;   
+    border-radius: 3px;
+    transition: all 0.5s ease;
 }
 
 /* style du bouton au survole */
 .button-texte:hover{
     color: #222;
     background: transparent;
+    animation: coloranim 8s ease infinite;
+}
+
+.text-anim{
+    transition: color 1s ease;
 }
 
 
@@ -133,6 +151,7 @@ h2{
 .texte_bravo{
     font-size: 7rem;
     font-weight: 800;
+    animation: coloranim 8s ease infinite;
 }
 
 /* comportements des boutons (juste sur page de FIN) */
@@ -162,5 +181,5 @@ h2{
 /* liens vers les portfolios */
 .auteur-fin{
     font-weight: 800;
-    color: #0151A3;
+    color: #0151a3;
 }
