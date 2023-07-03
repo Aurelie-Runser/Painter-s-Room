@@ -32,12 +32,29 @@
             </button>
         </a>
 
-        <!-- <a class="button fin-button" href="/room.html">
+        <a id="bouton-copie" class="button fin-button">
             <button class="button-texte">
                 Partager        
             </button>
-        </a> -->
+        </a>
     </div>
+
+    <script>
+        document.getElementById("bouton-copie").addEventListener("click", function() {
+            var lienAccueil = "https://rooms-painter.aurelierunser.fr/"; // Remplacez ceci par le lien de votre page d'accueil
+            copierDansPressePapier(lienAccueil);
+            alert("Lien de la page d'accueil copié dans le presse-papiers !");
+        });
+
+        function copierDansPressePapier(texte) {
+            var elementTemporaire = document.createElement("textarea");
+            elementTemporaire.value = texte;
+            document.body.appendChild(elementTemporaire);
+            elementTemporaire.select();
+            document.execCommand("copy");
+            document.body.removeChild(elementTemporaire);
+        }
+    </script>
     
 </body>
 </html>
