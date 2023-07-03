@@ -1,0 +1,746 @@
+<!DOCTYPE HTML>
+<html lang="fr">
+  <head>
+	<title>DUT MMI - SAE Programmer la 3D pour le web</title>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0px;
+      padding: 0px;
+      background-color: #777777;
+    }
+
+    #canvas {
+      display: block;
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      right: 434px;
+      bottom: 10px;
+      background-color: #000000;
+    }
+
+    #info {
+      display: block;
+      position: absolute;
+      width: 400px;
+      top: 10px;
+      right: 10px;
+      bottom: 10px;
+      background-color: #EEEEEE;
+      border: 2px solid white;
+      padding: 5px;
+      font-size: 14pt;
+      font-family: times new roman;
+      font-weight: bold;
+      font-style: italic;
+      color: black;
+    }
+
+    input {
+      background-color: #FFFFFF;
+      border: none;
+      width: 260px;
+      color: black;
+      font-size: 14pt;
+      font-family: times new roman;
+      font-weight: bold;
+    }
+
+    #divTexture {
+      display: block;
+      position: absolute;
+      width: 256px;
+      height: 256px;
+      bottom: 5px;
+      left: 5px;
+      background-color: black;
+      border: 1px solid white;
+      padding: 0px;
+      color: white;
+    }
+
+    #canvasTexture {
+      width: 256px;
+      height: 256px;
+      background: white;
+    }
+  </style>
+  </head>
+  <body>
+
+    <div id="canvas"></div>
+    <div id="info">
+      <table>
+        <tr>
+          <td>Click position : </td>
+          <td><input type="text" id="positions" value="(0;0)" class="info" /></td>
+        </tr>
+        <tr>
+          <td>Clicked object : </td>
+          <td><input type="text" id="obj_name" value="vide" class="info" /></td>
+        </tr>
+        <tr>
+          <td>Action : </td>
+          <td><input type="text" id="action" value="0" class="info" /></td>
+        </tr>
+      </table>
+      <div id="divTexture">
+        <canvas id="canvasTexture" width="256" height="256" />
+      </div>
+    </div>
+
+<script type="module">
+const param = { name:"room3",
+				goal:"goal3",
+				initPos:[32.0,17,-9], // 3DS Max position(x/10,z/10,-y/10)
+				initTgt:[48,16.5,-12],
+				spots:[
+					{ name:"spot008",angle:80,on:true,intensity:0.5,shadow:true,helper:false, button:"button12" },
+					{ name:"spot009",angle:80,on:true,intensity:0.5,shadow:true,helper:false, button:"button13" },
+					{ name:"spot010",angle:80,on:true,intensity:0.5,shadow:true,helper:false, button:"button11" },					
+				]
+			  };
+
+    import * as THREE from '../three.js-dev/build/three.module.js';
+    import { ColladaLoader } from '../three.js-dev/examples/jsm/loaders/ColladaLoader.js';
+	import { FirstPersonControls } from '../three.js-dev/examples/jsm/controls/FirstPersonControls.js';
+  var clickInfo=[];
+  var obstacles=[];
+  var animations=[]; // tableau qui contient la liste de objets cliquables
+  var container = document.getElementById("canvas");
+
+// variables utilisées par les deux fonctions
+  var renderer,camera,scene,controls;
+  var clock = new THREE.Clock();
+  var SCREEN_WIDTH,SCREEN_HEIGHT,SCREEN_LEFT,SCREEN_TOP;
+  const raycaster = new THREE.Raycaster();
+  const Vdown = new THREE.Vector3(0,-1,0);
+  var isMoving=false,floor=null, floorPorte=null;
+
+  var currentCode = "", goodCode = "713705#";
+  var canvasTexture, canvasContext, textureEcran1, textureEcran2, canvasMaterial;
+
+
+function onClickEvent(event) {
+  clickInfo.userHasClicked = true;
+  clickInfo.mouse = new THREE.Vector2();
+  clickInfo.mouse.x = ((event.clientX-SCREEN_LEFT) / SCREEN_WIDTH ) * 2 - 1;
+  clickInfo.mouse.y = -((event.clientY-SCREEN_TOP) / SCREEN_HEIGHT ) * 2 + 1;
+}
+
+function onKeyEvent(event) {
+  // console.log(event.code);
+  if (event.code=='Escape') isMoving = !isMoving;
+}
+
+function onWindowResize(){
+    let w = container.offsetWidth;
+    let h = container.offsetHeight;
+    SCREEN_WIDTH = container.scrollWidth;
+    SCREEN_HEIGHT = container.scrollHeight;
+    SCREEN_LEFT = container.offsetLeft - container.scrollLeft + container.clientLeft;
+    SCREEN_TOP = container.offsetTop - container.scrollTop + container.clientTop;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+}
+
+function start() {
+// initialisation du moteur de rendu
+	renderer = new THREE.WebGLRenderer();
+	renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;//THREE.PCFShadowMap;
+
+// création d'un canvas dans un div
+	renderer.setClearColor(0x222222,1);
+    window.addEventListener('resize', onWindowResize, false);
+
+    canvasTexture = document.getElementById("canvasTexture");
+      canvasContext = canvasTexture.getContext('2d');
+      textureEcran1 = new Image();
+      textureEcran1.src = '../images/clavier2_incomplet.png';
+      textureEcran2 = new Image();
+      textureEcran2.src = '../images/clavier2.png';
+
+	container.appendChild(renderer.domElement);
+    container.addEventListener('click',onClickEvent, false);
+	document.addEventListener('keydown',onKeyEvent);
+
+    let w = container.offsetWidth;
+    let h = container.offsetHeight;
+    SCREEN_WIDTH = container.scrollWidth;
+    SCREEN_HEIGHT = container.scrollHeight;
+    SCREEN_LEFT = container.offsetLeft - container.scrollLeft + container.clientLeft;
+    SCREEN_TOP = container.offsetTop - container.scrollTop + container.clientTop;
+    renderer.setSize(w, h);
+
+// création d'une caméra perspective(angle d'ouverture, rapport largeur/hauteur, near, far)
+	camera = new THREE.PerspectiveCamera(60, w/h, 1, 6000);
+    camera.position.set(param.initPos[0],param.initPos[1],param.initPos[2]); 
+	camera.lookAt(param.initTgt[0],param.initTgt[1],param.initTgt[2]);
+	controls = new FirstPersonControls(camera);
+    controls.lookSpeed = 0.10;
+    controls.movementSpeed = 10;
+    controls.lookVertical = true;
+    controls.constrainVertical = true;
+    controls.verticalMin = Math.PI/6.0; // entre PI/6 et 5PI/6
+    controls.verticalMax = 5.0*Math.PI/6.0;
+	
+// création de la scène
+	scene = new THREE.Scene();
+    scene.add(camera);
+
+    clock.start();
+	var loader = new ColladaLoader();
+	loader.load( './models/'+param.name+".dae",onLoaded, onProgress, onError );
+
+// sources de lumière
+	let ambientLight = new THREE.AmbientLight(0x202020); 
+	scene.add(ambientLight);
+}
+
+function animate(){
+	let dt=clock.getDelta();
+// rendu de la scène
+	let savePos = camera.position.clone(); // copie la position de la caméra avant de la modifier
+    if (isMoving) controls.update(dt);
+
+// camera sur le sol
+	if (floor) {
+		raycaster.set(camera.position,Vdown); // rayon qui part de la camera et va vers le bas
+		let intersections = raycaster.intersectObjects(obstacles,true); // intersections avec le sol
+		if (intersections.length>0) { // si l'intersection existe
+		  let dh = (16-intersections[0].distance)*5;
+		  camera.position.y += dh*dt;
+		  //console.log("dist="+intersections[0].distance+" "+intersections[0].object.name);
+		  if (intersections[0].object.name==param.goal) {
+        console.log("BRAVO");
+			window.location.href = "/fin.html";
+      }
+      if (intersections[0].object.name==param.goal && !sessionStorage.getItem('redirected')) {
+        sessionStorage.setItem('redirected', true);
+        window.location.href = "fin.html";
+		  }
+		} else {
+		  // remettre la caméra à la position précédente
+		  camera.position.x = savePos.x;
+		  camera.position.z = savePos.z;
+		}
+	}
+    renderer.render(scene, camera);
+	
+	// détection du picking
+    if (clickInfo.userHasClicked) {
+		clickInfo.userHasClicked=false; // pret pour le clique suivant
+		raycaster.setFromCamera(clickInfo.mouse,camera);
+  		let intersections = raycaster.intersectObjects(scene.children,true);
+		let obj=null;
+		let i=0;
+		while (i<intersections.length && intersections[i].object.visible==false) {
+			i++;
+		}
+  		if (i<intersections.length) {
+			obj = intersections[i].object; // l'objet de la premiere intersection
+			// si l'objet à un nom vide alors on sélectionne son pere
+			while (obj!=null && obj.name=="") { // cherche le nom du parent
+				obj=obj.parent;
+			}
+			
+			if (obj) { // Lance la fonction onclick sur l'objet cliqué
+				// console.log(obj.name);
+				animations.forEach(object => {
+					if (object.name==obj.name) {
+						object.onClick(intersections[i]);
+					}
+				});
+			}
+		}
+    }
+    
+    animations.forEach(object => { // mettre à jour l'animation sur tous les objects cliquables
+      object.updateAnimation(dt);
+    });
+
+// lancement du frame suivant
+    requestAnimationFrame(animate);
+  }
+
+  function onLoaded(collada) {
+    let object = collada.scene;
+
+    scene.add(object);
+    object.scale.set(0.1,0.1,0.1);
+	
+	// traite le tableau de sources de lumières
+	param.spots.forEach(spot=>{
+		let light = object.getObjectByName(spot.name);
+		light.penumbra=(spot.angle-10)/(spot.angle-10);
+		light.angle=spot.angle*Math.PI/180;
+		light.visible=spot.on;
+		light.castShadow = spot.shadow;
+		light.intensity=spot.intensity;
+
+    // association d'un bouton à chaque lumière
+    let button = object.getObjectByName(spot.button);
+    button.rotation.x = THREE.Math.degToRad(0.0);
+    let myMat = button.material.clone();
+    button.material = myMat;
+    myMat.color = new THREE.Color(0.0, 1.0, 0.0); // Change la couleur du bouton
+    myMat.emissive = new THREE.Color(0.0, 1.0, 0.0);
+    // new attribut to store the state of the switch button
+    button.state = false;
+
+		light.target=object.getObjectByName(spot.name+'.Target');
+		if (spot.helper) {
+			const spotLightHelper = new THREE.SpotLightHelper(light);
+			scene.add(spotLightHelper);
+		}
+		if (spot.shadow) {
+			light.shadow.mapSize.width = 2048;
+			light.shadow.mapSize.height = 2048;
+			light.shadow.camera.near = 1;
+			light.shadow.camera.far = 1000;
+			light.shadow.camera.fov = spot.angle;
+		}
+
+    // changement de lumière pour chaque clique sur le bouton
+    button.onClick = function (intersection) {
+      this.state = !this.state; // inverse l'état du bouton
+      light.visible = !light.visible; // inverse l'état de la lumière
+      // changer la couleur du bouton en vert si ON en rouge si OFF
+      if (light.visible) {
+        this.material.color = new THREE.Color(0.0, 1.0, 0.0);
+        this.material.emissive = new THREE.Color(0.0, 1.0, 0.0);
+      } else {
+        this.material.color = new THREE.Color(1.0, 0.0, 0.0);
+        this.material.emissive = new THREE.Color(1.0, 0.0, 0.0);
+      }
+      this.rotation.x = THREE.Math.degToRad(this.state ? 10.0 : -10.0);
+      cadre_code.material[1].emissiveIntensity = (light.visible == false && light.name == "spot009");
+
+      
+    }
+    button.updateAnimation = function (dt) {  // pas d'animation dans le temps
+    }
+    animations.push(button); // ajoute le bouton à la liste des objets cliquables  // attention button est interactivable
+
+    });
+
+
+
+    // COFFRE ------------------------------------------------------------------------------------------------------------------------
+
+    // animation du cadre
+    let cadre = object.getObjectByName('cadre3');
+
+      animations.push(cadre); // cadre est un objet cliquable/animable
+      cadre.animationStatus = 0; // création de l'attibut animationStatus init à 0
+      cadre.clicable = true
+
+      //  mouvement du cadre au clique
+      cadre.onClick = function (intersection) {
+        if (this.animationStatus == 0){
+          this.t = 0
+          this.a0 = cadre.position.z;
+          this.a1 = cadre.position.z + 500;
+          this.duration = 5.0;
+          this.animationStatus = 1;
+        }
+      }
+      
+      cadre.t = 0
+      cadre.updateAnimation = function (dt) {  // pas d'animeation dans le temps
+        this.t += dt;
+
+        this.t += dt; // ajoute le temps écouler entre les deux frames
+        let position = this.a0 + this.t * (this.a1 - this.a0) / (this.duration);
+
+        if (this.clicable){
+          switch (this.animationStatus) {
+            case 1:
+              this.position.z = position;
+              if (this.t > this.duration) {
+                this.position.z = this.a1;
+                this.t = 0;
+                this.duration = 0.2; // durée d'attente
+                this.animationStatus = 2;  
+              }
+              break;
+  
+            case 2:
+              if (this.t > this.duration) {
+                this.clicable = false;
+                this.animationStatus = 0;
+              }
+            }
+            
+        }
+    }
+
+    // COFFRE FIN --------------------------------------------------------------------------------------------------------------
+
+
+    // POIGNE-----------------------------------------------------------------------------------------------------------------------
+
+    
+    let poignee = object.getObjectByName('poignee');
+      animations.push(poignee); // cadre est un objet cliquable/animable
+      poignee.animationStatus = 0; // création de l'attibut animationStatus init à 0
+
+      poignee.onClick = function (intersection) {
+        if (this.animationStatus == 0) {
+          this.t = 0; // au moment du clique, on lance le chronometre
+          this.a0 = 0; // angle de début du mouvement
+          this.a1 = -Math.PI / 4; // angle de fin du mouvement
+          this.duration = 0.25; // durée du mouvement
+          this.animationStatus = 1; // déclenche l'abaissement
+        }
+      }
+          
+    
+    poignee.t = 0;
+      poignee.updateAnimation = function (dt) {
+        // angle : l'angle en fonction de l'heure courante
+        this.t += dt; // ajoute le temps écouler entre les deux frames
+        let angle = this.a0 + this.t * (this.a1 - this.a0) / (this.duration);
+        switch (this.animationStatus) {
+          case 1:
+            this.rotation.z = angle;
+            if (this.t > this.duration ) {
+              this.rotation.z = this.a1;
+              this.animationStatus = 2;
+              this.t = 0;
+              this.duration = 0.5; // durée d'attente
+
+              if(currentCode==goodCode){ 
+
+              verrou.t = 0;//déclencher le verrou
+              verrou.animationStatus = 1;
+              verrou.x0 = 10.8 * 25.4;
+              verrou.x1 = 9.9 * 25.4;
+              verrou.duration = 2;}
+
+            }
+            break;
+          case 2:
+            if (this.t > this.duration) {
+              this.rotation.z = this.a1;
+              this.animationStatus = 2;
+              this.t = 0; // au moment du clique, on lance le chronometre
+              this.a0 = -Math.PI / 4; // angle de début du mouvement
+              this.a1 = 0; // angle de fin du mouvement
+              this.duration = 0.25; // durée du mouvement
+              this.animationStatus = 3; // déclenche la remontée
+            }
+            break;
+          case 3:
+            this.rotation.z = angle;
+            if (this.t > this.duration) {
+              this.rotation.z = this.a1;
+              this.animationStatus = 0;
+            }
+            break;
+        }
+      }
+
+
+
+    // POIGNE FIN -----------------------------------------------------------------------------------------------------------------------
+
+
+    // VERROUX -----------------------------------------------------------------------------------------------------------------------
+
+    let verrou = object.getObjectByName('verrou');
+      animations.push(verrou); // cadre est un objet cliquable/animable
+      verrou.animationStatus = 0; // création de l'attibut animationStatus init à 0
+
+      verrou.onClick = function (intersection) {
+
+      }
+
+      verrou.t = 0;
+      verrou.updateAnimation = function (dt) {
+        // angle : l'angle en fonction de l'heure courante
+        this.t += dt; // ajoute le temps écouler entre les deux frames
+        let x = this.x0 + this.t * (this.x1 - this.x0) / (this.duration);
+        switch (this.animationStatus) {
+          case 1:
+            this.position.x = x;
+            if (this.t > this.duration) {
+              this.position.x = this.x1;
+              this.animationStatus = 2;
+              this.t = 0;
+              this.duration = 0.5; // durée d'attente
+
+
+              //déclencher la porte
+              porte.t = 0;
+              porte.animationStatus = 1;
+              porte.a0 = 0;
+              porte.a1 = -Math.PI / 2;
+              porte.duration = 2;
+            }
+
+            break;
+          case 3:
+            this.position.x = x;
+            if (this.t > this.duration) {
+              this.position.x = this.x1;
+              this.animationStatus = 0;
+            }
+            break;
+        }
+      }
+
+
+
+    // VERROUX FIN -----------------------------------------------------------------------------------------------------------------------
+
+
+    // CLAVIER -------------------------------------------------------------------------------------------------------------------
+
+        // traite la source de lumière à l'intérieur du coffre
+        let lightCoffre = object.getObjectByName('spotCadre');
+        lightCoffre.penumbra = 43.0 / 60.0;
+        lightCoffre.distance = 170.0 / 2.54;
+        let targetCoffre = object.getObjectByName('spotCadre.Target');
+        lightCoffre.target = targetCoffre;
+        lightCoffre.visible = false; // éteint la lumière
+        lightCoffre.power = Math.PI;
+
+
+      let porte = object.getObjectByName('porte');
+
+      animations.push(porte); // cadre est un objet cliquable/animable
+      porte.animationStatus = 0; // création de l'attibut animationStatus init à 0
+
+      porte.onClick = function (intersection) {
+          if (textureEcran1 == textureEcran2){  // condition necessaire pour ne pas pouvoir ecrire le code sans la touche 5
+          // redessiner la texture avec un click en intersection.uv.x, intersection.uv.y
+          updateCode(intersection.uv.x, intersection.uv.y)
+        }
+      }
+
+      porte.t = 0;
+      porte.updateAnimation = function (dt) {
+        // angle : l'angle en fonction du l'heure courante
+        this.t += dt; // ajoute le temps écoulé entre les deux frames
+        let angle = this.a0 + this.t * (this.a1 - this.a0) / this.duration;
+        switch (this.animationStatus) {
+          case 1:
+            this.rotation.z = angle; // réduit l'angle de cadre de 'angle'
+            if (this.t > this.duration) { // si il atteint le mini
+              this.rotation.z = this.a1;
+              this.animationStatus = 0; // on change le status
+              this.t = 0;
+              lightCoffre.visible = true;
+              this.duration = 5;
+
+            }
+            break;
+
+        }
+      }
+
+    // CLAVIER FIN -------------------------------------------------------------------------------------------------------------------
+
+
+    // TOUCHE --------------------------------------------------------------------------------------------------------------
+
+
+    let touche = object.getObjectByName('Touche');
+    animations.push(touche);
+
+    touche.onClick = function (intersection) {
+        this.visible = false;
+        textureEcran1 = textureEcran2;
+        drawCanvas();
+      }
+    
+    touche.updateAnimation = function (dt) {
+
+    }
+
+
+
+    // TOUCHE FIN -------------------------------------------------------------------------------------------------------------------
+
+
+
+    // CADRE CODE -------------------------------------------------------------------------------------------------------------------
+
+    // grand tableau avec le code
+      let cadre_code = object.getObjectByName('cadre_code');
+      let texture_code = new THREE.TextureLoader().load('../images/soleil_code.jpg');
+      let mat_copy = cadre_code.material[1].clone();
+
+      cadre_code.material[1]=mat_copy;
+      cadre_code.material[1].emissiveMap = texture_code;
+
+      cadre_code.material[1].emissive = new THREE.Color(0.0, 0.8, 0.8);
+
+      cadre_code.material[1].emissiveIntensity = 0;
+
+      cadre_code.updateAnimation = function (dt){}
+
+    // CADRE CODE FIN -------------------------------------------------------------------------------------------------------------------
+
+    
+    // Porte --------------------------------------------------------------------------------------------------------------
+
+
+    let porte_sortie = object.getObjectByName('Porte');
+    animations.push(porte_sortie);
+    porte_sortie.onClick = function (intersection){}
+
+    porte_sortie.updateAnimation = function (dt){}
+
+
+    // Porte FIN -------------------------------------------------------------------------------------------------------------------
+
+
+    // Cle --------------------------------------------------------------------------------------------------------------
+
+
+    let cle = object.getObjectByName('cle');
+    animations.push(cle);
+
+    cle.onClick = function (intersection) {
+        this.visible = false;
+        porte_sortie.visible = false;
+        floorPorte.position.set(floorPorte.savedPosition.x,floorPorte.savedPosition.y,floorPorte.savedPosition.z);
+
+      }
+    
+    cle.updateAnimation = function (dt) {
+
+
+    }
+
+    // Cle FIN -------------------------------------------------------------------------------------------------------------------
+
+    
+	floor = object.getObjectByName('floor');
+	floor.visible=false;
+	obstacles.push(floor);
+	
+  floorPorte = object.getObjectByName('floor_porte');
+	floorPorte.visible=false;
+  floorPorte.savedPosition = floorPorte.position.clone();
+  floorPorte.position.set(10000,10000,10000);
+	obstacles.push(floorPorte);
+
+  let table = object.getObjectByName('Table');
+	obstacles.push(table);
+
+	let room = object.getObjectByName('room11');
+	setShadow(room,true,true);
+	
+	let goal = object.getObjectByName(param.goal);
+	goal.material[0].transparent=true;
+	animations.push(goal);
+	goal.onClick = function(intersection) {};
+	goal.updateAnimation = function(dt) {
+      this.rotation.z+=0.5*dt;
+	}
+	obstacles.push(goal);
+
+
+// CANVAS -------------------------------------------------------------------------------
+
+      canvasMaterial = new THREE.CanvasTexture(canvasTexture);
+      porte.children[2].material[1].emissiveMap = canvasMaterial;
+      porte.children[2].material[1].emissive = new THREE.Color(1.0, 1.0, 1.0);
+      drawCanvas();
+
+      let dt = clock.getElapsedTime();
+      document.getElementById('action').value = "Load completed after " + dt.toFixed(2) + " s.";
+    }
+
+    function onProgress(data) {
+      if (data.lengthComputable) {
+        var percentComplete = data.loaded / data.total * 100;
+        document.getElementById('action').value = "Loading:" + percentComplete.toFixed(1) + '%';
+      }
+    };
+
+    function onError(data) {
+      // console.error(data);
+    };
+
+    function drawCanvas(x, y) {
+      if (textureEcran1) {
+        canvasContext.drawImage(textureEcran1, 0, 0, 256, 256);
+      }
+      canvasContext.beginPath();
+      canvasContext.font = "40px Arial Black";
+      canvasContext.fillStyle = "white";
+      canvasContext.fillText(currentCode, 32, 40);
+      canvasMaterial.needsUpdate = true;
+
+      if (x) { // si il y a des paramètres
+        canvasContext.beginPath();
+        canvasContext.fillStyle = "#FF0000";
+        canvasContext.arc(256 * x, 256 * (1 - y), 6, 0, 2 * Math.PI);
+        canvasContext.fill();
+        
+      }
+      
+    }
+
+    function updateCode(x, y) {
+      // but : modifier currentCode
+
+      // tableau rouge 3 colonnes et 4 lignes !
+      let xcanvas = x * 256;
+      let ycanvas = y * 256;
+
+      let col = parseInt((xcanvas - 12) / 75); // 0 pour la première colonne, 1 pour la 2eme...
+      let lig = parseInt((ycanvas - 6) / 50); // 0 pour la ligne du bas, 1 pour la ligne au dessus.
+      let codeCase = col + (3-lig) * 3; // 9->'C',10->'0', 11->'#'
+
+      if (currentCode.length < 8){
+        if(codeCase>=0 && codeCase<9) currentCode+= ""+ (codeCase+1);
+      }
+
+      switch (codeCase) {
+        case 9: // boutton 'C' : corriger
+          currentCode = ""
+
+          break;
+
+        case 10 :// bouton '0'
+        if (currentCode.length < 6){
+          currentCode+="0" 
+        }
+        break;
+
+        case 11: //Bouton '3'
+        if (currentCode.length == 6)    {
+          currentCode+="#"
+        }    
+
+        break;
+        
+      }
+      // console.log("cuurent", currentCode);
+      drawCanvas(x, y);
+    }
+
+// CANVAS FIN------------------------------------------
+
+
+function setShadow(object,cast,receive) {
+    object.castShadow = cast;
+    object.receiveShadow = receive;
+    object.children.forEach(child => setShadow(child,cast,receive));
+  }
+/******************************************************************************/
+/* PROGRAMME PRINCIPAL ********************************************************/
+	start();
+	animate();
+
+    </script>
+  </body>
+</html>
