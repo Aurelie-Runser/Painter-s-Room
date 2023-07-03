@@ -12,6 +12,7 @@ html{
 
 /* ajout de l'image de fon */
 body{
+    position: relative;
     width: 100vw;
     height: 100vh;
     padding: 10vh 7vw;
@@ -20,6 +21,7 @@ body{
     background-position-x: right;
     background-position-y: center;
 }
+
 
 /* comportement de l'en tete */
 .entete{
@@ -53,6 +55,19 @@ h2{
     text-align: right;
     font-weight: 500;
 }
+
+/* liens vers les portfolios */
+.auteur-lien{
+    text-decoration: none;
+    color: #222;
+}
+
+/* liens vers les portfolios au survole */
+.auteur-lien:hover{
+    color: #E48102;
+}
+
+
 
 /* comportement du corps de la page (texte + bouton) */
 .corps{
@@ -102,8 +117,7 @@ h2{
 }
 
 /* sous-titres */
-.fin-escapegame,
-.fin-auteur{
+.fin-escapegame{
     text-align: left;
     font-size: 1rem;
 }
@@ -120,10 +134,10 @@ h2{
     font-weight: 800;
 }
 
-/* comportements des boutons (juste sur page de FIN)*/
+/* comportements des boutons (juste sur page de FIN) */
 .fin-buttons{
-    margin: 8vh 0;
-    width: 45vw;
+    margin: 8vh auto;
+    width: 600px;
     display: flex;
     justify-content: space-between;
     gap: 5px;
@@ -132,4 +146,20 @@ h2{
 /* style du bouton */
 .fin-button{
     margin: 0;
+}
+
+/* comportement des textes de crédits (juste sur page de FIN) */
+.div-auteurs{
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: right;
+    font-family: 'Nunito';
+    font-size: 1rem;
+}
+
+/* liens vers les portfolios */
+.auteur-fin{
+    font-weight: 800;
+    color: #0151A3;
 }
