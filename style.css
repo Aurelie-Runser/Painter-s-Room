@@ -130,7 +130,7 @@ h2{
 /* message pour les téléphones et tablettes */
 .texte-mobile{
     display: none;
-    margin: 10vh auto;
+    margin: 5vh auto;
     padding: 1rem;
     width: fit-content;
     text-align: center;
