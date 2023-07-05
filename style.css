@@ -130,7 +130,7 @@ h2{
 /* message pour les téléphones et tablettes */
 .texte-mobile{
     display: none;
-    margin: 5vh auto;
+    margin: 3vh auto;
     padding: 1rem;
     width: fit-content;
     text-align: center;
@@ -162,7 +162,7 @@ h2{
     }
     
     .corps{
-        margin: 5vh 0;
+        margin: 3vh 0;
         width: 100%;
         color: #222;
     }
