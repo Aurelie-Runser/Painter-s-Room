@@ -1,4 +1,4 @@
-# SAE 401 : Objet-3D-dans-une-Page-Web
+# SAE 401 : Objet 3D dans une Page Web
 
 Nous avions pour but, en 2 jours et par groupe de 3, réaliser un Escape Game sur une page web en 3D.
 
